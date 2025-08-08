@@ -2,7 +2,20 @@ import requests
 import streamlit as st
 from urllib.parse import urlparse, parse_qs
 from typing import Optional
-from backend.settings import API_BASE
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Development mode
+DEV = os.getenv("DEV", "true").lower() in ("true", "1", "yes")
+
+# API Base URL based on development mode
+if DEV:
+    API_BASE = "http://127.0.0.1:8000"
+else:
+    API_BASE = "https://morphus-rag-chat.vercel.app"
 
 st.set_page_config(page_title="Podcast RAG (YouTube jump)", layout="wide")
 
