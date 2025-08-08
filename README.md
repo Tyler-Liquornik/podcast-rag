@@ -22,6 +22,7 @@ pip install -r requirements.txt
 # 2) Copy env and set your keys
 cp .env .env
 # Set OPENAI_API_KEY, PINECONE_API_KEY, and optional INDEX_NAME
+# Set DEV=true for local development or DEV=false for production
 
 # 3) Run backend (FastAPI)
 uvicorn backend.main:app --reload --port 8000
@@ -49,6 +50,14 @@ streamlit run frontend/streamlit_app.py
 - We try English (and auto) transcripts; chunk at ~800 chars with overlap; each chunk's **timestamp** is the first segment's start time in that chunk.
 - **Limitations**: Transcripts may be disabled/unavailable; some videos don't permit transcript retrieval; newly uploaded videos may take time before captions are available.
 - **IP Bans**: YouTube may block requests from cloud provider IPs (AWS, GCP, Azure). Use the proxy configuration to work around this issue.
+
+**Environment Configuration**
+- The app uses a `DEV` environment variable to toggle between local and production URLs:
+  ```
+  DEV=true  # Uses http://127.0.0.1:8000 as API_BASE
+  DEV=false # Uses https://morphus-rag-chat.vercel.app as API_BASE
+  ```
+- This simplifies deployment and testing by eliminating the need to manually change API_BASE URLs.
 
 **Proxy Configuration**
 - To work around YouTube IP bans, the app supports Webshare rotating residential proxies.

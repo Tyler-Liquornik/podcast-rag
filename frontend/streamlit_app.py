@@ -1,10 +1,8 @@
-import os
 import requests
 import streamlit as st
 from urllib.parse import urlparse, parse_qs
 from typing import Optional
-
-API_BASE = os.getenv("API_BASE", "http://127.0.0.1:8000")
+from backend.settings import API_BASE
 
 st.set_page_config(page_title="Podcast RAG (YouTube jump)", layout="wide")
 
