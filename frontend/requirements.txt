@@ -1,3 +1,6 @@
+# Core
+python-dotenv==1.0.1
+
 # Frontend
 requests==2.32.4
 streamlit==1.37.1
