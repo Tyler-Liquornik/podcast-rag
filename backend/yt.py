@@ -1,4 +1,5 @@
 import re
+import time
 from typing import Optional, Tuple, List
 import yt_dlp
 from langchain_core.documents import Document
@@ -97,59 +98,41 @@ def _fetch_youtube_transcript_chunks(video_id: str, url: str, title: str):
             logger.debug("Using YouTubeTranscriptApi without Webshare proxies")
             ytt_api = YouTubeTranscriptApi()
 
-        # First try to get all available transcripts
+        # Add a delay to prevent 429 Too Many Requests errors
+        time.sleep(1)  # 1 second delay before making API calls
+
+        # Try to get all available transcripts
         try:
             logger.debug(f"Listing all available transcripts for video_id: {video_id}")
             transcript_list = ytt_api.list(video_id)
 
-            # First try to find auto-generated English transcript
+            # First try to find manual English transcript
             try:
-                logger.debug(f"Trying to find auto-generated English transcript")
-                transcript = transcript_list.find_generated_transcript(['en'])
+                logger.debug(f"Trying to find manual English transcript")
+                transcript = transcript_list.find_transcript(['en'])
+                # Add a small delay before fetching to prevent rate limiting
+                time.sleep(0.5)
                 fetched_transcript = transcript.fetch()
-                logger.info(f"Successfully fetched auto-generated English transcript")
+                logger.info(f"Successfully fetched English transcript (manual)")
                 segments = fetched_transcript.to_raw_data()
             except Exception as e:
-                logger.debug(f"No auto-generated English transcript found: {str(e)}")
+                logger.debug(f"No manual English transcript found: {str(e)}")
 
-                # Fall back to any English transcript
+                # Fall back to auto-generated English transcript
                 try:
-                    logger.debug(f"Trying to find any English transcript")
-                    transcript = transcript_list.find_transcript(['en'])
+                    logger.debug(f"Trying to find auto-generated English transcript")
+                    transcript = transcript_list.find_generated_transcript(['en'])
+                    # Add a small delay before fetching to prevent rate limiting
+                    time.sleep(0.5)
                     fetched_transcript = transcript.fetch()
-                    logger.info(f"Successfully fetched English transcript (manual)")
+                    logger.info(f"Successfully fetched auto-generated English transcript")
                     segments = fetched_transcript.to_raw_data()
                 except Exception as e:
-                    logger.debug(f"No English transcript found: {str(e)}")
-
-                    # Fall back to the original approach if transcript list methods fail
-                    logger.debug(f"Falling back to direct language-based fetching")
+                    logger.debug(f"No auto-generated English transcript found: {str(e)}")
+                    logger.warning(f"Could not find any English transcripts for video_id: {video_id}")
         except Exception as e:
-            logger.debug(f"Error listing transcripts: {str(e)}")
-            logger.debug(f"Falling back to direct language-based fetching")
-
-        # If we couldn't get the transcript using the list approach, try the direct approach
-        if not segments:
-            for langs in (["en"], ["en-US"], ["en-GB"], ["auto"]):
-                try:
-                    logger.debug(f"Trying to fetch transcript with languages: {langs}")
-                    fetched_transcript = ytt_api.fetch(video_id, languages=langs)
-
-                    # Determine transcript type
-                    transcript_type = "manual"
-                    if "auto" in langs:
-                        transcript_type = "auto-generated"
-                    elif langs[0] != "en":
-                        transcript_type = "translated"
-
-                    logger.info(f"Successfully fetched transcript with languages: {langs} (type: {transcript_type})")
-
-                    # Convert to the format expected by the rest of the function
-                    segments = fetched_transcript.to_raw_data()
-                    break
-                except (TranscriptsDisabled, NoTranscriptFound) as e:
-                    logger.debug(f"No transcript found with languages {langs}: {str(e)}")
-                    continue
+            logger.error(f"Error listing or fetching transcripts: {str(e)}")
+            logger.warning(f"Failed to retrieve transcript for video_id: {video_id}")
 
         if not segments:
             logger.error(f"No transcript available for video_id: {video_id} in any language")
