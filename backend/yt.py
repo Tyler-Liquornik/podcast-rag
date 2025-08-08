@@ -1,10 +1,14 @@
 import re
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 import yt_dlp
 from langchain_core.documents import Document
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
+from youtube_transcript_api.proxies import WebshareProxyConfig
 
-from .settings import logger, DEBUG_LOGGING
+from .settings import (
+    logger, DEBUG_LOGGING,
+    USE_PROXIES, WEBSHARE_PROXY_USERNAME, WEBSHARE_PROXY_PASSWORD
+)
 
 YOUTUBE_ID_RE = re.compile(r"(?:v=|/)([0-9A-Za-z_-]{11}).*")
 
@@ -76,7 +80,22 @@ def _fetch_youtube_transcript_chunks(video_id: str, url: str, title: str):
     try:
         logger.info(f"Fetching transcript for video_id: {video_id}")
         segments = None
-        ytt_api = YouTubeTranscriptApi()
+
+        # Initialize YouTubeTranscriptApi with proxy if enabled
+        if USE_PROXIES and WEBSHARE_PROXY_USERNAME and WEBSHARE_PROXY_PASSWORD:
+            logger.info("Using Webshare proxy for transcript fetching")
+
+            # Configure proxy
+            proxy_config = WebshareProxyConfig(
+                proxy_username=WEBSHARE_PROXY_USERNAME,
+                proxy_password=WEBSHARE_PROXY_PASSWORD
+            )
+
+            ytt_api = YouTubeTranscriptApi(proxy_config=proxy_config)
+            logger.debug("YouTubeTranscriptApi initialized with Webshare proxies")
+        else:
+            logger.debug("Using YouTubeTranscriptApi without Webshare proxies")
+            ytt_api = YouTubeTranscriptApi()
 
         # First try to get all available transcripts
         try:

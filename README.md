@@ -48,6 +48,22 @@ streamlit run frontend/streamlit_app.py
 - In the Streamlit sidebar paste 1+ URLs and click **Ingest YouTube URLs**.
 - We try English (and auto) transcripts; chunk at ~800 chars with overlap; each chunk's **timestamp** is the first segment's start time in that chunk.
 - **Limitations**: Transcripts may be disabled/unavailable; some videos don't permit transcript retrieval; newly uploaded videos may take time before captions are available.
+- **IP Bans**: YouTube may block requests from cloud provider IPs (AWS, GCP, Azure). Use the proxy configuration to work around this issue.
+
+**Proxy Configuration**
+- To work around YouTube IP bans, the app supports Webshare rotating residential proxies.
+- Configure in your `.env` file:
+  ```
+  USE_PROXY=true
+  WEBSHARE_PROXY_USERNAME=your-username
+  WEBSHARE_PROXY_PASSWORD=your-password
+  ```
+- Sign up for a Webshare account and purchase a "Residential" proxy package (not "Proxy Server" or "Static Residential").
+- This helps avoid RequestBlocked or IpBlocked exceptions when deploying to cloud providers.
+
+**Clearing Data**
+- In the Streamlit sidebar, click **Clear Index** to remove all data from the Pinecone index.
+- A confirmation button will appear to prevent accidental deletion.
 
 ### Searching
 - Enter a question and hit **Search**.
