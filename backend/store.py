@@ -71,4 +71,15 @@ class VectorStore:
             logger.error(f"Error searching vector store: {str(e)}")
             raise
 
+    def clear_index(self):
+        try:
+            logger.info("Clearing all data from Pinecone index")
+            # Access the underlying Pinecone index and delete all vectors
+            self.store.delete(delete_all=True)
+            logger.info("Successfully cleared all data from Pinecone index")
+            return True
+        except Exception as e:
+            logger.error(f"Error clearing Pinecone index: {str(e)}")
+            raise
+
 vs = VectorStore()

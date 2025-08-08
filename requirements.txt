@@ -1,22 +1,21 @@
 # Core
 langchain==0.3.3
+langchain-core==0.3.74
 langchain-openai==0.2.2
 langchain-community==0.3.2
 python-dotenv==1.0.1
 
-# Vector store (Pinecone)
-langchain-pinecone==0.2.11
-
 # Frontend
 requests==2.32.4
+streamlit==1.37.1
 
 # Backend / API
 fastapi==0.111.0
 uvicorn==0.30.5
 pydantic==2.8.2
 
-# Frontend
-streamlit==1.37.1
+# Database
+langchain-pinecone==0.2.11
 
 # YouTube transcript + metadata
 youtube-transcript-api==1.2.2

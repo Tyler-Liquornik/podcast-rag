@@ -74,6 +74,35 @@ with st.sidebar:
         else:
             st.warning("No URLs provided.")
 
+    st.markdown("---")
+    st.markdown("**Clear All Data**")
+
+    clear_col1, clear_col2 = st.columns(2)
+    with clear_col1:
+        clear_button = st.button("Clear Index", type="primary", help="This will delete all data from the Pinecone index")
+
+    if clear_button:
+        st.warning("⚠️ This will delete ALL data from the index.")
+        confirm_col1, confirm_col2 = st.columns(2)
+        with confirm_col1:
+            if st.button("Yes, Clear Everything", type="primary"):
+                try:
+                    with st.spinner("Clearing index..."):
+                        r = requests.post(f"{API_BASE}/clear-index", timeout=30)
+
+                    if r.status_code == 200:
+                        st.success("Successfully cleared all data from the index!")
+                    else:
+                        # Handle HTTP error responses
+                        try:
+                            error_data = r.json()
+                            st.error(f"Error: {error_data.get('detail', {}).get('message', 'Failed to clear index')}")
+                        except:
+                            # If we can't parse the JSON response
+                            st.error(f"Error: HTTP {r.status_code} - {r.text}")
+                except Exception as e:
+                    st.error(f"Error connecting to backend: {str(e)}")
+
 
 def yt_id_from_url(url: str) -> Optional[str]:
     """Extract YouTube video ID from various URL formats."""
@@ -123,7 +152,7 @@ if st.button("Search") and q:
 
     # If we get here, we should have results to display
     if not results:
-        st.info("No results found for your query. Try a different question or ingest more content.")
+        st.info("No results found for your query. You need to ingest some YouTube URLs first.")
         st.stop()
 
     cols = st.columns(3, gap="large")

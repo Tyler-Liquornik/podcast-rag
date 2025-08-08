@@ -101,6 +101,25 @@ def ingest_youtube(req: IngestYouTubeRequest):
         raise
 
 
+@app.post("/clear-index")
+def clear_index():
+    logger.info("Clear index endpoint called")
+
+    try:
+        vs.clear_index()
+        logger.info("Successfully cleared Pinecone index")
+        return {"status": "success", "message": "All data has been cleared from the index"}
+    except Exception as e:
+        logger.error(f"Error in clear index endpoint: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "Failed to clear index",
+                "error": str(e)
+            }
+        )
+
+
 @app.get("/search", response_model=SearchResponse)
 def search(q: str = Query(..., description="User query"), k: int = 6):
     logger.info(f"Searching for: '{q}' with k={k}")

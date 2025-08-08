@@ -79,6 +79,7 @@ streamlit run frontend/streamlit_app.py
 
 - `GET /healthz` – smoke test
 - `POST /ingest/youtube` – body: `{ "urls": ["https://youtu.be/..."] }`
+- `POST /clear-index` – clears all data from the Pinecone index
 - `GET /search?q=...&k=6` – returns top‑k results with `video_url`, `start_seconds`
 
 ---
