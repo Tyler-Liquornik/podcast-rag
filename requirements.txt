@@ -1,6 +1,6 @@
 # Core
 langchain==0.3.3
-langchain-openai==0.2.2
+langchain-openai==0.3.11
 langchain-community==0.3.2
 python-dotenv==1.0.1
 
