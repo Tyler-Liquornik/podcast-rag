@@ -6,7 +6,7 @@ from langchain_core.documents import Document
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
 from youtube_transcript_api.proxies import WebshareProxyConfig
 
-from .settings import (
+from settings import (
     logger, DEBUG_LOGGING,
     USE_PROXIES, WEBSHARE_PROXY_USERNAME, WEBSHARE_PROXY_PASSWORD
 )

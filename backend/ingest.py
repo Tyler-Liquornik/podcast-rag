@@ -3,9 +3,9 @@ from typing import List, Dict, Any
 
 from langchain.schema import Document
 
-from .store import vs
-from .yt import _get_video_metadata, _fetch_youtube_transcript_chunks
-from .settings import logger, DEBUG_LOGGING
+from store import vs
+from yt import _get_video_metadata, _fetch_youtube_transcript_chunks
+from settings import logger, DEBUG_LOGGING
 
 
 # Metadata:
