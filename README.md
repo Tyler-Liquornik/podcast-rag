@@ -16,19 +16,23 @@ This proof‑of‑concept lets you:
 ## Quickstart
 
 ```bash
-# 1) Create venv however you like, then:
-pip install -r requirements.txt
+# 1) Install pipenv if you don't have it
+pip install pipenv
 
 # 2) Copy env and set your keys
 cp .env .env
 # Set OPENAI_API_KEY, PINECONE_API_KEY, and optional INDEX_NAME
 # Set DEV=true for local development or DEV=false for production
 
-# 3) Run backend (FastAPI)
-uvicorn backend.main:app --reload --port 8000
+# 3) Setup and run backend (FastAPI)
+cd backend
+pipenv install
+pipenv run uvicorn main:app --reload --port 8000
 
-# 4) Run frontend (Streamlit)
-streamlit run frontend/streamlit_app.py
+# 4) In a new terminal, setup and run frontend (Streamlit)
+cd frontend
+pipenv install
+pipenv run streamlit run streamlit_app.py
 ```
 
 ### Setting up Pinecone
@@ -111,11 +115,12 @@ podcast-rag/
     settings.py      # env config
     store.py         # Pinecone vector store
     yt.py            # YouTube helpers (id, meta)
+    Pipfile          # Backend dependencies managed by pipenv
   frontend/
     streamlit_app.py # UI: ingest controls + result tiles with embeds
+    Pipfile          # Frontend dependencies managed by pipenv
   shared/
     utils.py         # time utils
-  requirements.txt
   .env.example
   README.md
 ```
