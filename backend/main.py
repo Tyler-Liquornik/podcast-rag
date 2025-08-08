@@ -3,9 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 import time
 
-from .data_models import IngestYouTubeRequest, IngestFolderRequest, SearchResponse, SearchResponseItem
+from .data_models import IngestYouTubeRequest, SearchResponse, SearchResponseItem
 from .store import vs
-from .ingest import ingest_youtube_urls, ingest_markdown_folder
+from .ingest import ingest_youtube_urls
 from .utils import seconds_to_hms
 from .settings import logger, DEBUG_LOGGING
 
@@ -100,25 +100,6 @@ def ingest_youtube(req: IngestYouTubeRequest):
         logger.error(f"Error in YouTube ingestion endpoint: {str(e)}")
         raise
 
-@app.post("/ingest/folder")
-def ingest_folder(req: IngestFolderRequest):
-    folder_path = req.folder_path
-    logger.info(f"Ingesting markdown folder: {folder_path}")
-
-    try:
-        results = ingest_markdown_folder(folder_path)
-
-        # Log summary of results
-        success_count = len([r for r in results if r.get("status") == "ok"])
-        error_count = len([r for r in results if r.get("status") == "error"])
-        empty_count = len([r for r in results if r.get("status") == "empty"])
-
-        logger.info(f"Folder ingestion completed: {success_count} successful, {error_count} errors, {empty_count} empty")
-
-        return {"results": results}
-    except Exception as e:
-        logger.error(f"Error in folder ingestion endpoint: {str(e)}")
-        raise
 
 @app.get("/search", response_model=SearchResponse)
 def search(q: str = Query(..., description="User query"), k: int = 6):

@@ -74,59 +74,6 @@ with st.sidebar:
         else:
             st.warning("No URLs provided.")
 
-    st.markdown("---")
-    st.markdown("**Ingest Markdown Folder**")
-    folder_path = st.text_input("Absolute path to folder with .md transcripts")
-    if st.button("Ingest Folder"):
-        if folder_path:
-            try:
-                r = requests.post(f"{API_BASE}/ingest/folder", json={"folder_path": folder_path}, timeout=600)
-
-                # Check if the request was successful
-                if r.status_code == 200:
-                    payload = r.json()
-
-                    # Check for errors in the response
-                    errors = [x for x in payload.get("results", []) if x.get("status") == "error"]
-
-                    if errors:
-                        # Display errors with details
-                        st.error("Some files could not be processed:")
-                        for error in errors:
-                            path = error.get("folder", error.get("file", "Unknown path"))
-                            error_msg = error.get("error", "Unknown error")
-
-                            with st.expander(f"Error processing: {path}"):
-                                st.code(error_msg, language="text")
-
-                        # If some files were successful, show those too
-                        successes = [x for x in payload.get("results", []) if x.get("status") == "ok"]
-                        if successes:
-                            st.success(f"Successfully processed {len(successes)} out of {len(payload.get('results', []))} files.")
-                    else:
-                        st.success(f"All {len(payload.get('results', []))} files processed successfully!")
-                else:
-                    # Handle HTTP error responses
-                    try:
-                        error_data = r.json()
-                        st.error(f"Error: {error_data.get('detail', {}).get('message', 'Failed to process folder')}")
-
-                        # Display detailed errors if available
-                        errors = error_data.get('detail', {}).get('errors', [])
-                        if errors:
-                            for error in errors:
-                                path = error.get("file", "Unknown file")
-                                error_msg = error.get("error", "Unknown error")
-
-                                with st.expander(f"Error processing: {path}"):
-                                    st.code(error_msg, language="text")
-                    except:
-                        # If we can't parse the JSON response
-                        st.error(f"Error: HTTP {r.status_code} - {r.text}")
-            except Exception as e:
-                st.error(f"Error connecting to backend: {str(e)}")
-        else:
-            st.warning("Enter a folder path.")
 
 def yt_id_from_url(url: str) -> Optional[str]:
     """Extract YouTube video ID from various URL formats."""

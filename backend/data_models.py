@@ -4,8 +4,6 @@ from pydantic import BaseModel, HttpUrl
 class IngestYouTubeRequest(BaseModel):
     urls: List[HttpUrl]
 
-class IngestFolderRequest(BaseModel):
-    folder_path: str
 
 class SearchResponseItem(BaseModel):
     score: float

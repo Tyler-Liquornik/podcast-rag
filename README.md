@@ -2,7 +2,6 @@
 
 This proof‑of‑concept lets you:
 - Ingest **YouTube videos** (fetch transcript, chunk, embed w/ OpenAI).
-- Ingest a **folder of .md transcripts** (no timestamps). We **estimate timestamps** evenly across video duration (if `youtube_url` present) or estimated by words.
 - **Search** for relevant chunks and **jump** to the exact moment in YouTube via `?start=<seconds>`.
 
 ## Stack
@@ -50,19 +49,6 @@ streamlit run frontend/streamlit_app.py
 - We try English (and auto) transcripts; chunk at ~800 chars with overlap; each chunk's **timestamp** is the first segment's start time in that chunk.
 - **Limitations**: Transcripts may be disabled/unavailable; some videos don't permit transcript retrieval; newly uploaded videos may take time before captions are available.
 
-**Markdown folder**
-- Place `.md` files in a folder.
-- (Optional) Front-matter header to bind the file to a YouTube video:
-  ```
-  ---
-  youtube_url: https://www.youtube.com/watch?v=dQw4w9WgXcQ
-  ---
-  Transcript text here...
-  ```
-- We split to sentences, chunk by ~800 chars, and **estimate** timestamps by evenly spacing across duration.
-  - If `youtube_url` present, we fetch duration via `yt-dlp`.
-  - Otherwise we estimate duration by words (`~0.375 sec/word`).
-
 ### Searching
 - Enter a question and hit **Search**.
 - You'll see tiles with:
@@ -77,7 +63,6 @@ streamlit run frontend/streamlit_app.py
 
 - `GET /healthz` – smoke test
 - `POST /ingest/youtube` – body: `{ "urls": ["https://youtu.be/..."] }`
-- `POST /ingest/folder` – body: `{ "folder_path": "/abs/path/to/mds" }`
 - `GET /search?q=...&k=6` – returns top‑k results with `video_url`, `start_seconds`
 
 ---
@@ -85,7 +70,7 @@ streamlit run frontend/streamlit_app.py
 ## Notes / Design Choices
 - **Pinecone** used as a cloud-based vector database for efficient similarity search and scalability.
 - **Embeddings** via `text-embedding-3-small` to keep cost low. Upgrade if needed.
-- **Timestamps** for YouTube transcripts are exact (from API). Markdown-only inputs are **estimated**.
+- **Timestamps** for YouTube transcripts are exact (from API).
 - **Security**: This is a local POC. Add auth, quotas, and CORS rules before deploying.
 - **Observability**: Wire in LangSmith if you want traces.
 
@@ -95,7 +80,7 @@ streamlit run frontend/streamlit_app.py
 ```
 podcast-rag/
   backend/
-    ingest.py        # YouTube + .md ingestion + timestamp logic
+    ingest.py        # YouTube ingestion + timestamp logic
     main.py          # FastAPI app + /search
     models.py        # Pydantic schemas
     settings.py      # env config
@@ -104,7 +89,7 @@ podcast-rag/
   frontend/
     streamlit_app.py # UI: ingest controls + result tiles with embeds
   shared/
-    utils.py         # sentence split, chunker, time utils
+    utils.py         # time utils
   requirements.txt
   .env.example
   README.md
