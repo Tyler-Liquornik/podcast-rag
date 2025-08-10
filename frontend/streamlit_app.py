@@ -180,7 +180,7 @@ if st.button("Search") and q:
             watch_url = to_watch_url_with_start(url, start)
 
             # Use st.video for full-width YouTube embedding
-            st.components.v1.iframe(watch_url, height=480)
+            st.components.v1.iframe(watch_url, width = 1000, height=480)
 
             # Add a direct link below the video
             st.markdown(f"[Open in YouTube ↗]({watch_url})")
