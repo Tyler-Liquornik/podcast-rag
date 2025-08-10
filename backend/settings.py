@@ -20,6 +20,7 @@ logger = logging.getLogger("podcast-rag")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY", "")
 INDEX_NAME = os.getenv("INDEX_NAME", "podcast-clips-index")
+<<<<<<< HEAD
 
 # Development mode
 DEV = os.getenv("DEV", "true").lower() in ("true", "1", "yes")
@@ -29,6 +30,8 @@ if DEV:
     API_BASE = f"http://127.0.0.1:8000"
 else:
     API_BASE = "https://morphus-rag-chat.vercel.app"
+=======
+>>>>>>> 2437fee (deployment ready for vercel, switched to pipenv)
 
 # Webshare Proxy Configuration
 WEBSHARE_PROXY_USERNAME = os.getenv("WEBSHARE_PROXY_USERNAME", "")

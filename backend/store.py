@@ -3,7 +3,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain.schema import Document
 
-from .settings import OPENAI_API_KEY, PINECONE_API_KEY, INDEX_NAME, logger, DEBUG_LOGGING
+from settings import OPENAI_API_KEY, PINECONE_API_KEY, INDEX_NAME, logger, DEBUG_LOGGING
 
 class VectorStore:
     def __init__(self):

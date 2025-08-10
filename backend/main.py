@@ -3,11 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 import time
 
-from .data_models import IngestYouTubeRequest, SearchResponse, SearchResponseItem
-from .store import vs
-from .ingest import ingest_youtube_urls
-from .utils import seconds_to_hms
-from .settings import logger, DEBUG_LOGGING
+from data_models import IngestYouTubeRequest, SearchResponse, SearchResponseItem
+from store import vs
+from ingest import ingest_youtube_urls
+from utils import seconds_to_hms
+from settings import logger, DEBUG_LOGGING
 
 app = FastAPI(title="Podcast RAG API", version="0.1.0")
 
