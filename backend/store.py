@@ -1,7 +1,7 @@
 from typing import List, Tuple
 from langchain_openai import OpenAIEmbeddings
-from langchain_pinecone import PineconeVectorStore
-from langchain.schema import Document
+from langchain_pinecone import PineconeVectorStore, PineconeRerank
+from langchain_core.documents import Document
 
 from settings import OPENAI_API_KEY, PINECONE_API_KEY, INDEX_NAME, logger, DEBUG_LOGGING
 
@@ -50,25 +50,54 @@ class VectorStore:
             logger.error(f"Error adding documents to vector store: {str(e)}")
             raise
 
-    def search(self, query: str, k: int = 6) -> List[Tuple[Document, float]]:
+    def search(self, query: str, k: int = 6, rerank_model: str = "bge-reranker-v2-m3") -> List[Tuple[Document, float]]:
         try:
             logger.info(f"Searching vector store for: '{query}' (k={k})")
-            results = self.store.similarity_search_with_score(query, k=k)
-            logger.info(f"Search returned {len(results)} results")
 
-            if DEBUG_LOGGING and results:
-                for i, (doc, score) in enumerate(results):
+            # First get more results than we need for better reranking
+            # We'll retrieve more documents (k*3) to give reranker more options
+            initial_k = k * 3
+            results = self.store.similarity_search_with_score(query, k=initial_k)
+            logger.info(f"Initial search returned {len(results)} results")
+
+            if not results:
+                return []
+
+            # Extract just the documents for reranking
+            documents = [doc for doc, _ in results]
+
+            # Rerank the documents
+            reranker = PineconeRerank(
+                model="bge-reranker-v2-m3",
+                top_n=k,
+                return_documents=True,
+                pinecone_api_key=PINECONE_API_KEY
+            )
+            reranked_docs = reranker.compress_documents(list(documents), query=query)
+
+            logger.info(f"Reranking returned {len(reranked_docs)} results")
+
+            # Convert reranked documents to the expected return format (Document, float)
+            # Use the relevance_score from reranking as the score
+            final_results = []
+            for doc in reranked_docs:
+                relevance_score = doc.metadata.get('relevance_score', 0.0)
+                final_results.append((doc, relevance_score))
+
+            if DEBUG_LOGGING and final_results:
+                for i, (doc, score) in enumerate(final_results):
                     metadata = doc.metadata or {}
-                    logger.debug(f"Result {i+1}/{len(results)}:")
-                    logger.debug(f"  Score: {score}")
+                    logger.debug(f"Result {i+1}/{len(final_results)}:")
+                    logger.debug(f"  Relevance Score: {score}")
                     logger.debug(f"  Title: {metadata.get('title', 'No title')}")
                     logger.debug(f"  Video URL: {metadata.get('video_url', 'No URL')}")
                     logger.debug(f"  Start seconds: {metadata.get('start_seconds', 'N/A')}")
                     logger.debug(f"  Content preview: {doc.page_content[:100]}...")
 
-            return results
+            return final_results
         except Exception as e:
             logger.error(f"Error searching vector store: {str(e)}")
             raise
+
 
 vs = VectorStore()
