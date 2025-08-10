@@ -8,6 +8,7 @@ from store import vs
 from ingest import ingest_youtube_urls
 from utils import seconds_to_hms
 from settings import logger, DEBUG_LOGGING
+from agent import generate_response
 
 app = FastAPI(title="Podcast RAG API", version="0.1.0")
 
@@ -102,12 +103,12 @@ def ingest_youtube(req: IngestYouTubeRequest):
 
 
 @app.get("/search", response_model=SearchResponse)
-def search(q: str = Query(..., description="User query"), k: int = 6):
-    logger.info(f"Searching for: '{q}' with k={k}")
+def search(q: str = Query(..., description="User query")):
+    logger.info(f"Searching for: '{q}'")
 
     try:
         start_time = time.time()
-        pairs = vs.search(q, k=k)
+        pairs = vs.search(q)  # k parameter is handled in the search method
         search_time = time.time() - start_time
 
         logger.info(f"Search returned {len(pairs)} results in {search_time:.3f}s")
@@ -117,8 +118,19 @@ def search(q: str = Query(..., description="User query"), k: int = 6):
             meta = doc.metadata or {}
             title = str(meta.get("title") or "Untitled")
             video_url = meta.get("video_url")
-            start_seconds = int(meta.get("start_seconds") or 0)
+            original_start_seconds = int(meta.get("start_seconds") or 0)
+            # Start the video 8 seconds before the retrieved timestamp to ease in
+            start_seconds = max(0, original_start_seconds - 8)
 
+            # Generate AI response for this result
+            snippet_text = doc.page_content[:800] + ("..." if len(doc.page_content) > 800 else "")
+            ai_response = generate_response(
+                query=q,
+                title=title,
+                snippet=snippet_text
+            )
+
+            # Create the response item with the generated response
             results.append(
                 SearchResponseItem(
                     score=float(score),
@@ -127,6 +139,7 @@ def search(q: str = Query(..., description="User query"), k: int = 6):
                     video_url=video_url,
                     start_seconds=start_seconds,
                     start_hms=seconds_to_hms(start_seconds),
+                    ai_response=ai_response,
                 )
             )
 

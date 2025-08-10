@@ -17,10 +17,10 @@ if DEV:
 else:
     API_BASE = "https://morphus-rag-chat.vercel.app"
 
-st.set_page_config(page_title="Podcast RAG (YouTube jump)", layout="wide")
+st.set_page_config(page_title="Podcast RAG", layout="wide")
 
-st.title("🎧 Podcast RAG with Timestamp Jump")
-st.caption("Type a question. Get relevant clips. Jump right to the moment in YouTube.")
+st.title("🎧 Morphus Chat with Podcasts")
+st.caption("Type a question. Get the most relevant clip. Jump right to the moment in YouTube.")
 
 with st.sidebar:
     st.subheader("Ingest")
@@ -107,17 +107,35 @@ def yt_id_from_url(url: str) -> Optional[str]:
         return None
     return None
 
+def to_watch_url_with_start(url: str, start: int) -> str:
+    """
+    Convert a YouTube URL to a watch URL with start time parameter.
+    This format works well with st.video for embedding.
+    """
+    if not url:
+        return url
+
+    # Get the video ID
+    vid = yt_id_from_url(url)
+    if not vid:
+        return url
+
+    # Create a watch URL with start time
+    return f"https://www.youtube.com/embed/{vid}?start={start}&autoplay=0"
+
 q = st.text_input("Ask about your podcast:", placeholder="e.g., What did she say about magnesium and sleep?")
-k = st.slider("Results", 1, 12, 6, 1)
+
+# Add a caption to explain what the user is seeing
+st.caption("Enter a query and click Search to see the single best-matching timestamped video segment.")
 
 if st.button("Search") and q:
     with st.spinner("Searching..."):
         try:
-            r = requests.get(f"{API_BASE}/search", params={"q": q, "k": k}, timeout=60)
+            r = requests.get(f"{API_BASE}/search", params={"q": q}, timeout=60)
 
             if r.status_code == 200:
                 data = r.json()
-                results = data.get("results", [])
+                result = data.get("results", [])
             else:
                 # Handle HTTP error responses
                 try:
@@ -133,33 +151,43 @@ if st.button("Search") and q:
             st.stop()
 
     # If we get here, we should have results to display
-    if not results:
+    if not result:
         st.info("No results found for your query. Try a different question or ingest more content.")
         st.stop()
 
-    cols = st.columns(3, gap="large")
+    result = result[0]
+    if result:
+        title = result.get("title") or "Untitled"
+        snippet = result.get("snippet") or ""
+        url = result.get("video_url")
+        start = int(result.get("start_seconds") or 0)
+        start_hms = result.get("start_hms") or "00:00"
 
-    for idx, item in enumerate(results):
-        with cols[idx % 3]:
-            title = item.get("title") or "Untitled"
-            snippet = item.get("snippet") or ""
-            url = item.get("video_url")
-            start = int(item.get("start_seconds") or 0)
-            start_hms = item.get("start_hms") or "00:00"
+        st.subheader(title)
+        # Use the score from server-side reranking
+        score = result.get('score', 0.0)
+        st.caption(f"Jump at **{start_hms}** • score={score:.3f}")
 
-            st.markdown(f"**{title}**")
-            score = item.get('score', 0.0)
-            st.caption(f"Jump at **{start_hms}** • score={score:.3f}")
-            if url:
-                vid = yt_id_from_url(url)
-                if vid:
-                    embed = f"https://www.youtube.com/embed/{vid}?start={start}&autoplay=0"
-                    st.components.v1.iframe(embed, height=315)
-                # Determine if the URL already has query parameters
-                timestamp_separator = "&" if "?" in url else "?"
-                st.link_button("Open on YouTube ↗", f"{url}{timestamp_separator}t={start}s")
-            else:
-                st.info("No video URL associated with this chunk.")
+        # Display the AI response if available
+        ai_response = result.get('ai_response')
+        if ai_response:
+            st.markdown(f"**Why this is relevant:**")
+            st.markdown(ai_response)
+            st.markdown("---")
 
-            with st.expander("Snippet"):
-                st.write(snippet)
+        if url:
+            # Use the helper function to create a watch URL with start time
+            watch_url = to_watch_url_with_start(url, start)
+
+            # Use st.video for full-width YouTube embedding
+            st.components.v1.iframe(watch_url, height=480)
+
+            # Add a direct link below the video
+            st.markdown(f"[Open in YouTube ↗]({watch_url})")
+        else:
+            st.info("No video URL associated with this chunk.")
+
+        with st.expander("Original Transcript"):
+            st.write(snippet)
+    else:
+        st.info("No results available.")

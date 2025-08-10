@@ -50,14 +50,11 @@ class VectorStore:
             logger.error(f"Error adding documents to vector store: {str(e)}")
             raise
 
-    def search(self, query: str, k: int = 6, rerank_model: str = "bge-reranker-v2-m3") -> List[Tuple[Document, float]]:
+    def search(self, query: str) -> List[Tuple[Document, float]]:
         try:
-            logger.info(f"Searching vector store for: '{query}' (k={k})")
+            logger.info(f"Searching vector store for: '{query}' (k=20)")
 
-            # First get more results than we need for better reranking
-            # We'll retrieve more documents (k*3) to give reranker more options
-            initial_k = k * 3
-            results = self.store.similarity_search_with_score(query, k=initial_k)
+            results = self.store.similarity_search_with_score(query, k=20)
             logger.info(f"Initial search returned {len(results)} results")
 
             if not results:
@@ -66,10 +63,10 @@ class VectorStore:
             # Extract just the documents for reranking
             documents = [doc for doc, _ in results]
 
-            # Rerank the documents
+            # Rerank the documents and always return only the top 1
             reranker = PineconeRerank(
                 model="bge-reranker-v2-m3",
-                top_n=k,
+                top_n=1,
                 return_documents=True,
                 pinecone_api_key=PINECONE_API_KEY
             )
